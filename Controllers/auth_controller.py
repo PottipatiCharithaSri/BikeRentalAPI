@@ -86,6 +86,7 @@ def login():
     }
 })
 @auth_bp.route("/register", methods=["POST"])
+@validate(RegisterSchema)
 def register():
     success = auth_service.register(request.json)
 

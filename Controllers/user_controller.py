@@ -1,4 +1,4 @@
-from Validators.user_schema import CreateUserSchema
+from Validators.user_schema import UpdateUserSchema
 from Validators.validate_request import validate
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
@@ -79,6 +79,7 @@ def get_user(user_id):
 })
 @user_bp.route("/<int:user_id>", methods=["PATCH"])
 @jwt_required()
+@validate(UpdateUserSchema)
 def update_user(user_id):
     current_user_id = int(get_jwt_identity())
     role = get_jwt().get("role")

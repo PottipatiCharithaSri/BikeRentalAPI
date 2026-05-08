@@ -29,7 +29,11 @@ class AuthService(AuthInterface):
             password=generate_password_hash(data["password"]),
             name=data["name"],
             age=data["age"],
-            role="USER"   
+            role="USER",
+            
+            aadhar=data.get("aadhar"),
+            licence=data.get("licence")
+
         )
 
         db.session.add(user)
