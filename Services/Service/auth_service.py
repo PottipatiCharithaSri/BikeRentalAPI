@@ -16,7 +16,7 @@ class AuthService(AuthInterface):
         if not check_password_hash(user.password, data["password"]):
             return None
 
-        return create_access_token(identity=user.username, additional_claims={"role": user.role})
+        return create_access_token(identity=user.id, additional_claims={"role": user.role})
 
 
     def register(self, data):

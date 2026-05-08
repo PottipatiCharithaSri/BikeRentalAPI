@@ -1,8 +1,7 @@
-from Models import user
 from Models.user import User
 from Data.db import db
 from Services.Interfaces.user_interface import UserInterface
-
+from werkzeug.security import generate_password_hash
 
 class UserService(UserInterface):
 
@@ -29,9 +28,12 @@ class UserService(UserInterface):
 
     def create_user(self, data):
         user = User(
+            username=data["username"],
+            password=generate_password_hash(data["password"]),
             name=data["name"],
-            age=data["age"]
-        )
+            age=data["age"])
+        
+            
         db.session.add(user)
         db.session.commit()
 

@@ -6,12 +6,6 @@ from flasgger import swag_from
 rental_bp = Blueprint("rentals", __name__)
 
 
-@rental_bp.before_request
-@jwt_required()
-def protect_rental_routes():
-    pass
-
-
 @rental_bp.route("/rent/<int:rental_id>", methods=["GET"])
 @jwt_required()
 def get_rental(rental_id):
@@ -37,7 +31,12 @@ def get_rental(rental_id):
 
     if not rental:
         return jsonify({"message": "Rental not found"}), 404
+    current_user_id = int(get_jwt_identity())
+    role = get_jwt().get("role")
 
+    if rental["user_id"] != current_user_id and role != "ADMIN":
+      return jsonify({"message": "Access denied"}), 403
+  
     return jsonify(rental), 200
 
 
@@ -106,7 +105,6 @@ def return_rental(rental_id):
     current_user_id = int(get_jwt_identity())
     role = get_jwt().get("role")
 
-    # ✅ Owner or admin only
     if rental["user_id"] != current_user_id and role != "ADMIN":
         return {"message": "Access denied"}, 403
 
