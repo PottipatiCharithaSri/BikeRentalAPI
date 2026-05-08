@@ -1,12 +1,13 @@
 from flask import Flask, jsonify
 from flask_migrate import Migrate
 from flasgger import Swagger
-
+import os
 from Data import db, jwt
 from Data.db import jwt_blocklist
 from werkzeug.security import generate_password_hash
 from Controllers import auth_bp, user_bp, bike_bp, rental_bp
 from Models.user import User
+from Controllers import location_bp
 
 
 @jwt.token_in_blocklist_loader
@@ -34,7 +35,7 @@ def ensure_single_admin():
 def create_app():
     app = Flask(__name__)
 
-    app.config["JWT_SECRET_KEY"] = "bike-rental-api-jwt-secret-key"
+    app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
     app.config["SQLALCHEMY_DATABASE_URI"] = (
         "postgresql+psycopg2://postgres:Postgres@localhost:5432/bike_rental_db"
     )
@@ -74,6 +75,7 @@ def create_app():
     app.register_blueprint(user_bp, url_prefix="/api/users")
     app.register_blueprint(bike_bp, url_prefix="/api/bikes")
     app.register_blueprint(rental_bp, url_prefix="/api")
+    app.register_blueprint(location_bp, url_prefix="/api")
 
     @app.route("/")
     def home():

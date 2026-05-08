@@ -53,12 +53,8 @@ def login():
     if not user or not check_password_hash(user.password, data["password"]):
         return {"message": "Invalid credentials"}, 401
 
-    
-    if user.role == "ADMIN" and user.username != "admin":
-        return {"message": "Unauthorized admin access"}, 403
-
     access_token = create_access_token(
-        identity=str(user.id),
+        identity=user.id,
         additional_claims={"role": user.role}
     )
 

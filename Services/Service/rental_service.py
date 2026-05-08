@@ -2,6 +2,7 @@ from Models.rental import Rental
 from Models.bike import Bike
 from Data.db import db
 from Services.Interfaces.rental_interface import RentalInterface
+from datetime import datetime, timedelta
 
 
 class RentalService(RentalInterface):
@@ -31,34 +32,38 @@ class RentalService(RentalInterface):
 
     def create_rental(self, user_id, bike_id):
         bike = Bike.query.get(bike_id)
+
         if not bike or not bike.available:
             return False, "Bike not available"
 
         rental = Rental(
             user_id=user_id,
             bike_id=bike_id,
-            status="RENTED"
+            status="RENTED",
+            expected_return_at=datetime.utcnow() + timedelta(hours=24)
         )
 
         bike.available = False
+
         db.session.add(rental)
         db.session.commit()
 
         return True, "Bike rented successfully"
 
-    def return_bike(self, rental_id):
-        rental = Rental.query.get(rental_id)
-        if not rental or rental.status != "RENTED":
-            return False, "Rental not found"
 
-        bike = Bike.query.get(rental.bike_id)
-        if bike:
-            bike.available = True
+        def return_bike(self, rental_id):
+            rental = Rental.query.get(rental_id)
+            if not rental or rental.status != "RENTED":
+                return False, "Rental not found"
 
-        rental.status = "RETURNED"
-        db.session.commit()
+            bike = Bike.query.get(rental.bike_id)
+            if bike:
+                bike.available = True
 
-        return True, "Bike returned"
+            rental.status = "RETURNED"
+            db.session.commit()
+
+            return True, "Bike returned"
 
     def cancel_rental(self, rental_id):
         rental = Rental.query.get(rental_id)
