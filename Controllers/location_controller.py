@@ -3,12 +3,15 @@ from flask_jwt_extended import jwt_required
 from Auth.role_guard import admin_required
 from Data.db import db
 from Models.location import Location
+from Validators.location_schema import LocationSchema
+from Validators.validate_request import validate
 
 location_bp = Blueprint("locations", __name__)
 
 @location_bp.route("/locations", methods=["POST"])
 @jwt_required()
 @admin_required()
+@validate(LocationSchema)
 def create_location():
     data = request.get_json()
 

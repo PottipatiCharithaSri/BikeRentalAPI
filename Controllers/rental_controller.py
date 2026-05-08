@@ -3,6 +3,9 @@ from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 from Services.Service.rental_service import rental_service
 from flasgger import swag_from
 
+from Validators.rental_schema import RentBikeSchema
+from Validators.validate_request import validate
+
 rental_bp = Blueprint("rentals", __name__)
 
 
@@ -64,6 +67,7 @@ def get_rental(rental_id):
 })
 @rental_bp.route("/rent", methods=["POST"])
 @jwt_required()
+@validate(RentBikeSchema)
 def rent_bike():
     data = request.get_json()
     bike_id = data["bike_id"]
