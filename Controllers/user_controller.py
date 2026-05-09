@@ -33,7 +33,7 @@ def get_user(user_id):
     current_user_id = int(get_jwt_identity())
     role = get_jwt().get("role")
 
-    if current_user_id != user_id and role != "ADMIN":
+    if current_user_id != user_id and role != "admin":
         return jsonify({"message": "Access denied"}), 403
 
     user = user_service.get_user_by_id(user_id)

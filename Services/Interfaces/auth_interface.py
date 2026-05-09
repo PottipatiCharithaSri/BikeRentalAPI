@@ -1,5 +1,7 @@
 from typing import Dict, Optional
 
+from Models.user import User
+
 class AuthInterface:
     def login(self, data: Dict) -> Optional[str]:
         """
@@ -8,9 +10,9 @@ class AuthInterface:
         """
         raise NotImplementedError
 
-    def register(self, data: Dict) -> bool:
+    def register(self, data: Dict) -> Optional[User]:
         """
         Register a new user.
-        Returns True if success, False if username exists.
+        Returns User if success, False if username exists.
         """
         raise NotImplementedError

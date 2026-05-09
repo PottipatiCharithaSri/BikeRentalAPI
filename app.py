@@ -25,7 +25,7 @@ def ensure_single_admin():
             password=generate_password_hash("Admin@123"),
             name="System Admin",
             age=30,
-            role="ADMIN"
+            role="admin"
         )
         db.session.add(admin)
         db.session.commit()
@@ -35,10 +35,8 @@ def ensure_single_admin():
 def create_app():
     app = Flask(__name__)
 
-    app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY")
-    app.config["SQLALCHEMY_DATABASE_URI"] = (
-        "postgresql+psycopg2://postgres:Postgres@localhost:5432/bike_rental_db"
-    )
+    app.config["JWT_SECRET_KEY"] = os.getenv("JWT_SECRET_KEY", "dev-secret-key")
+    app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://postgres:Postgres@localhost:5432/bike_rental_db"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     db.init_app(app)
