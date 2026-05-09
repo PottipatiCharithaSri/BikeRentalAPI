@@ -7,38 +7,24 @@ from flask import current_app
 
 class AuthService(AuthInterface):
 
-    def login(self, data):
-        user = User.query.filter_by(username=data["username"]).first()
-
-        if not user:
-            return None
-
-        if not check_password_hash(user.password, data["password"]):
-            return None
-
-        return create_access_token(identity=user.id, additional_claims={"role": user.role})
-
-
     def register(self, data):
         existing_user = User.query.filter_by(username=data["username"]).first()
         if existing_user:
-            return False
+            return None
 
         user = User(
             username=data["username"],
             password=generate_password_hash(data["password"]),
             name=data["name"],
-            age=data["age"],
-            role="USER",
-            
+            age=data["age"],            
             aadhar=data.get("aadhar"),
-            licence=data.get("licence")
-
+            licence=data.get("licence"),
+            role="user"
         )
 
         db.session.add(user)
         db.session.commit()
-        return True
+        return user
 
 
 auth_service = AuthService()

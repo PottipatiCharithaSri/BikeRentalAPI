@@ -10,4 +10,14 @@ class Bike(db.Model):
 
     location_id = db.Column(db.Integer, db.ForeignKey("locations.id"), nullable=False)
     location = db.relationship("Location", backref="bikes")
+    
+    
+    user_id = db.Column(
+        db.Integer,
+        db.ForeignKey("users.id"),
+        nullable=True
+    )
+
+    user = db.relationship("User", backref="bikes")
+
 

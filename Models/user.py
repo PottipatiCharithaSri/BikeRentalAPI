@@ -11,7 +11,7 @@ class User(db.Model):
     name = db.Column(db.String(100), nullable=False)
     age = db.Column(db.Integer, nullable=False)
 
-    role = db.Column(db.String(20), default="USER")
+    role = db.Column(db.String(20), default="user")
     
     aadhar = db.Column(db.String(20), nullable=True)
     licence = db.Column(db.String(30), nullable=True)

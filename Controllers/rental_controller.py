@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 from Services.Service.rental_service import rental_service
 from flasgger import swag_from
+from Models.bike import Bike
 
 from Validators.rental_schema import RentBikeSchema
 from Validators.validate_request import validate
@@ -37,7 +38,7 @@ def get_rental(rental_id):
     current_user_id = int(get_jwt_identity())
     role = get_jwt().get("role")
 
-    if rental["user_id"] != current_user_id and role != "ADMIN":
+    if rental["user_id"] != current_user_id and role != "admin":
       return jsonify({"message": "Access denied"}), 403
   
     return jsonify(rental), 200
@@ -69,15 +70,46 @@ def get_rental(rental_id):
 @jwt_required()
 @validate(RentBikeSchema)
 def rent_bike():
-    data = request.get_json()
-    bike_id = data["bike_id"]
+    from Models.location import Location
+    from Models.rental import Rental
+    from datetime import datetime, timedelta
+    from Data.db import db
 
-    success, message = rental_service.create_rental(
-        user_id=get_jwt_identity(),
-        bike_id=bike_id
+    user_id = int(get_jwt_identity())
+
+    location_name = request.json["location"]
+
+    location = Location.query.filter_by(name=location_name).first()
+    if not location:
+        return jsonify({"message": "Location not found"}), 404
+
+    bike = Bike.query.filter_by(
+        location_id=location.id,
+        available=True
+    ).first()
+
+    if not bike:
+        return jsonify({"message": "No bikes available at this location"}), 400
+
+    rental = Rental(
+        user_id=user_id,
+        bike_id=bike.id,
+        status="RENTED",
+        expected_return_at=datetime.utcnow() + timedelta(hours=24)
     )
 
-    return jsonify({"message": message}), 201 if success else 400
+    bike.available = False
+    bike.user_id = user_id
+
+    db.session.add(rental)
+    db.session.commit()
+
+    return jsonify({
+        "message": "Bike rented successfully",
+        "bike_model": bike.model,
+        "location": location.name,
+        "expected_return_at": rental.expected_return_at
+    }), 201
 
 
 @rental_bp.route("/rent/<int:rental_id>", methods=["PATCH"])
@@ -109,7 +141,7 @@ def return_rental(rental_id):
     current_user_id = int(get_jwt_identity())
     role = get_jwt().get("role")
 
-    if rental["user_id"] != current_user_id and role != "ADMIN":
+    if rental["user_id"] != current_user_id and role != "admin":
         return {"message": "Access denied"}, 403
 
     success, message = rental_service.return_bike(rental_id)
@@ -146,7 +178,7 @@ def cancel_rental(rental_id):
     current_user_id = int(get_jwt_identity())
     role = get_jwt().get("role")
 
-    if rental["user_id"] != current_user_id and role != "ADMIN":
+    if rental["user_id"] != current_user_id and role != "admin":
         return {"message": "Access denied"}, 403
 
     success, message = rental_service.cancel_rental(rental_id)
