@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 from Services.Service.user_service import user_service
 from flasgger import swag_from
-
+from Data.db import jwt_blocklist
 user_bp = Blueprint("users", __name__)
 
 
@@ -60,13 +60,13 @@ def get_user(user_id):
             "schema": {
                 "type": "object",
                 "properties": {
-                    "name": {
+                    "username": {
                         "type": "string",
-                        "example": "Cherry"                   
+                        "example": "new_username"
                     },
-                    "age": {
-                        "type": "integer",
-                        "example": 28
+                    "password": {
+                        "type": "string",
+
                     }
                 }
             }
@@ -74,6 +74,7 @@ def get_user(user_id):
     ],
     "responses": {
         200: {"description": "User updated"},
+        403: {"description": "Access denied"},
         404: {"description": "User not found"}
     }
 })
@@ -84,18 +85,23 @@ def update_user(user_id):
     current_user_id = int(get_jwt_identity())
     role = get_jwt().get("role")
 
-    if current_user_id == user_id:
+    if current_user_id == user_id or role == "admin":
         user_service.update_user(user_id, request.json)
-        return jsonify({"message": "Profile updated"}), 200
+    
+        jti = get_jwt()["jti"]
+        jwt_blocklist.add(jti)
 
-    if role == "ADMIN":
-        user_service.update_user(user_id, request.json)
-        return jsonify({"message": "User updated by admin"}), 200
+        return jsonify({
+            "message": "Credentials updated successfully. Please log in again."
+        }), 200
 
-    return jsonify({"message": "You are not allowed to update this user"}), 403
+    return jsonify({
+        "message": "You are not allowed to update this user"
+    }), 403
 
 
-  
+
+
 @swag_from({
     "tags": ["Users"],
     "security": [{"Bearer": []}],
@@ -119,7 +125,7 @@ def delete_user(user_id):
     
     role = get_jwt().get("role")
 
-    if role != "ADMIN":
+    if role != "admin":
         return jsonify({"message": "Only admin can delete users"}), 403
 
     success = user_service.delete_user(user_id)

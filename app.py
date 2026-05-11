@@ -9,7 +9,6 @@ from Controllers import auth_bp, user_bp, bike_bp, rental_bp
 from Models.user import User
 from Controllers import location_bp
 
-
 @jwt.token_in_blocklist_loader
 def check_if_token_revoked(jwt_header, jwt_payload):
     return jwt_payload["jti"] in jwt_blocklist

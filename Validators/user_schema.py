@@ -5,12 +5,14 @@ class CreateUserSchema(Schema):
     age = fields.Int(required=True, validate=validate.Range(min=1))
 
 
+
 class UpdateUserSchema(Schema):
-    name = fields.Str(
+    username = fields.Str(
         required=False,
-        validate=validate.Length(min=2)
+        validate=validate.Length(min=3)
     )
-    age = fields.Int(
+    password = fields.Str(
         required=False,
-        validate=validate.Range(min=1, max=120)
+        validate=validate.Length(min=6)
     )
+
