@@ -63,6 +63,31 @@ def create_location():
 @location_bp.route("/locations", methods=["GET"])
 @jwt_required()
 def get_locations():
+  
+    """
+    Get all pickup locations
+    ---
+    tags:
+      - Locations
+    security:
+      - Bearer: []
+    responses:
+      200:
+        description: List of locations
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              latitude:
+                type: number
+              longitude:
+                type: number
+    """
     locations = Location.query.all()
     return jsonify([
         {

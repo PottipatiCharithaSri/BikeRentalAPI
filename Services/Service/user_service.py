@@ -42,12 +42,12 @@ class UserService(UserInterface):
         if not user:
             return None
 
-        if "name" in data:
-            user.name = data["name"]
+        if "username" in data:
+            user.username = data["username"]
 
-        if "age" in data:
-            user.age = data["age"]
-
+        if "password" in data:
+            user.password = generate_password_hash(data["password"])
+            
         db.session.commit()
         return user
     

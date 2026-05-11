@@ -36,7 +36,7 @@ class RegisterSchema(Schema):
             if not re.match(r"^[2-9][0-9]{11}$", data["aadhar"]):
                 raise ValidationError({
                     "aadhar": [
-                        "Invalid Aadhaar number. Must be 12 digits and not start with 0 or 1"
+                        "Invalid Aadhaar number. Must be 12 digits and should not start with 0 or 1"
                     ]
                 })
                 

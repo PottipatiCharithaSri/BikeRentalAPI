@@ -3,37 +3,52 @@ from Data import db
 from Models.bike import Bike
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required
+from Models.enums.rental_status import RentalStatus
 from Models.location import Location
 from Models.rental import Rental
-from Services.Service.bike_service import bike_service
+from flasgger import swag_from
+
 bike_bp = Blueprint("bikes", __name__)
-import math
 
-def distance_km(lat1, lon1, lat2, lon2):
-    return math.sqrt((lat1 - lat2)**2 + (lon1 - lon2)**2) * 111
-
+@swag_from({
+    "tags": ["Bikes"],
+    "security": [{"Bearer": []}],
+    "parameters": [
+        {
+            "in": "query",
+            "name": "location",
+            "required": True,
+            "type": "string",
+            "example": "MG Road"
+        }
+    ],
+    "responses": {
+        200: {
+            "description": "List of bikes",
+            "schema": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "bike_id": {"type": "integer"},
+                        "bike_model": {"type": "string"},
+                        "location": {"type": "string"},
+                        "available": {"type": "boolean"},
+                        "expected_return_at": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": True
+                        }
+                    }
+                }
+            }
+        },
+        404: {"description": "Location not found"}
+    }
+})
 @bike_bp.route("", methods=["GET"])
 @jwt_required()
 def list_bikes_by_location():
-    
-    """
-    List bikes by location (read‑only)
-    ---
-    tags:
-      - Bikes
-    security:
-      - Bearer: []
-    parameters:
-      - in: query
-        name: location
-        required: true
-        type: string
-        example: MG Road
-        description: Pickup location name (human-readable)
-    responses:
-      200:
-        description: List of bikes for the given location
-    """
     location_name = request.args.get("location")
 
     if not location_name:
@@ -49,59 +64,63 @@ def list_bikes_by_location():
     for bike in bikes:
         rental = (
             Rental.query
-            .filter_by(bike_id=bike.id, status="RENTED")
+            .filter(
+                Rental.bike_id == bike.id,
+                Rental.status.in_([
+                    RentalStatus.RESERVED,
+                    RentalStatus.ACTIVE,
+                    RentalStatus.OVERDUE
+                ])
+            )
             .order_by(Rental.id.desc())
             .first()
         )
+
         result.append({
-            "location": location.name,
+            "bike_id": bike.id,
             "bike_model": bike.model,
-            "available": bike.available,
-            "expected_return_at": (
-                rental.expected_return_at if rental else None
-            )
+            "location": location.name,
+            "available": rental is None,
+            "expected_return_at": rental.expected_return_at if rental else None
         })
 
     return jsonify(result), 200
-  
-  
+
+
+@swag_from({
+    "tags": ["Bikes"],
+    "security": [{"Bearer": []}],
+    "parameters": [
+        {
+            "in": "body",
+            "name": "body",
+            "required": True,
+            "schema": {
+                "type": "object",
+                "properties": {
+                    "model": {
+                        "type": "string",
+                        "example": "Activa 6G"
+                    },
+                    "location": {
+                        "type": "string",
+                        "example": "MG Road"
+                    }
+                },
+                "required": ["model", "location"]
+            }
+        }
+    ],
+    "responses": {
+        201: {"description": "Bike created successfully"},
+        403: {"description": "Admin access required"},
+        404: {"description": "Location not found"}
+    }
+})
 @bike_bp.route("", methods=["POST"])
 @jwt_required()
 @admin_required()
 def create_bike():
-    """
-    Create a new bike (ADMIN only)
-    ---
-    tags:
-      - Bikes
-    security:
-      - Bearer: []
-    parameters:
-      - in: body
-        name: body
-        required: true
-        schema:
-          type: object
-          properties:
-            model:
-              type: string
-              example: Activa 6G
-            location:
-              type: string
-              example: MG Road
-          required:
-            - model
-            - location
-    responses:
-    
-      201:
-        description: Bike created successfully
-      403:
-        description: Admin access required
-      404:
-        description: Location not found
-    """
-
     data = request.get_json()
 
     if "model" not in data or "location" not in data:
@@ -123,6 +142,5 @@ def create_bike():
         "message": "Bike created successfully",
         "bike_id": bike.id,
         "model": bike.model,
-        "location": location.name,
-        "available": bike.available
-    }), 201 
+        "location": location.name
+    }), 201
